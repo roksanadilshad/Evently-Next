@@ -8,7 +8,6 @@ import toast, { Toaster } from "react-hot-toast";
 import { motion } from "framer-motion";
 import { FcGoogle } from "react-icons/fc";
 
-
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,6 +15,13 @@ export default function LoginPage() {
   const searchParams = useSearchParams(); 
   const redirect = searchParams.get("redirect") || "/"; 
   const [loading, setLoading] = useState(false);
+
+  // --- Demo Credentials Logic ---
+  const handleDemo = () => {
+    setEmail("admin@event.com");
+    setPassword("password123");
+    toast.success("Demo credentials loaded!");
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,18 +64,34 @@ export default function LoginPage() {
       >
         <h1 className="text-3xl font-bold mb-6 text-center text-[#850E35]">Login</h1>
 
+        {/* --- Demo Credential Box --- */}
+        <div className="mb-6 p-4 bg-white/40 border border-[#850E35]/10 rounded-2xl flex justify-between items-center">
+          <div className="text-xs text-[#850E35]">
+            <p className="font-bold opacity-70">Demo Account:</p>
+            <p>Email: <span className="font-mono">admin@event.com</span></p>
+            <p>Pass: <span className="font-mono">password123</span></p>
+          </div>
+          <button 
+            onClick={handleDemo}
+            type="button"
+            className="text-xs font-bold bg-[#850E35] text-white px-3 py-1.5 rounded-lg hover:bg-[#EE6983] transition"
+          >
+            Use Demo
+          </button>
+        </div>
+
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
           className="w-full py-3 mb-4 bg-[#EE6983] text-[#FCF5EE] font-semibold rounded-xl shadow-md hover:bg-[#d94f6b] transition transform hover:scale-105 flex items-center justify-center gap-2"
         >
-         <FcGoogle></FcGoogle>
+          <FcGoogle size={20} />
           Sign in with Google
         </button>
 
         <div className="flex items-center mb-6">
           <hr className="flex-1 border-[#850E35]/30" />
-          <span className="px-2 text-[#850E35]/70">OR</span>
+          <span className="px-2 text-[#850E35]/70 text-xs">OR</span>
           <hr className="flex-1 border-[#850E35]/30" />
         </div>
 

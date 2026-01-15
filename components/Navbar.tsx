@@ -75,6 +75,12 @@ export default function Navbar() {
               {menuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-[#850E35] text-[#FCF5EE] shadow rounded p-2 ">
                   <Link
+                    href="/dashboard"
+                    className="block px-3 py-2 hover:bg-[#FFC4C4] transition-all hover:text-[#850E35] rounded"
+                  > 
+                    Dashboard
+                  </Link>
+                  <Link
                     href="/dashboard/add-event"
                     className="block px-3 py-2 hover:bg-[#FFC4C4] transition-all hover:text-[#850E35] rounded"
                   > 
@@ -140,6 +146,12 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="space-y-2 bg-[#850E35] text-[#FCF5EE] rounded-2xl mt-2">
+              <Link
+                href="/dashboard"
+                className="block px-3 py-2 hover:bg-[#FFC4C4] transition-all hover:text-[#850E35] rounded"
+              >
+                Dashboard
+              </Link>
               <Link
                 href="/dashboard/add-event"
                 className="block px-3 py-2 hover:bg-[#FFC4C4] transition-all hover:text-[#850E35] rounded"
