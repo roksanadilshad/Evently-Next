@@ -14,9 +14,17 @@ export default function UpcomingEvents() {
 
   useEffect(() => {
     fetch("/api/items/upcoming")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch");
+        }
+        return res.json();
+      })
       .then((data) => setEvents(Array.isArray(data) ? data : []))
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+        setEvents([]);
+      });
   }, []);
 
   return (

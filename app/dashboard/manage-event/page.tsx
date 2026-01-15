@@ -1,27 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, User } from "firebase/auth";
 import toast from "react-hot-toast";
 import Image from "next/image";
 import Swal from "sweetalert2";
 import { HashLoader } from "react-spinners";
 
+// 1. Define the Product interface
+interface Product {
+  _id: string;
+  title: string;
+  shortDescription: string;
+  fullDescription: string;
+  price: number | string;
+  image?: string;
+  time?: string;
+  date?: string;
+  location?: string;
+  category?: string;
+  priority?: string;
+  createdAt?: string;
+}
+
 export default function Dashboard() {
-  const [user, setUser] = useState(null);
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // 2. Type the states
+  const [user, setUser] = useState<User | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Consolidated state for the edit modal
-  const [editFormData, setEditFormData] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [editFormData, setEditFormData] = useState<Product | null>(null);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const router = useRouter();
 
-  // 1. Protect page and handle Auth
+  // 3. Protect page and handle Auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (!firebaseUser) {
@@ -34,31 +51,27 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, [router]);
 
-  // 2. Fetch Products
-  const fetchProducts = () => {
-    if (!user) return;
-    setLoading(true);
-    fetch(`/api/events?userId=${user.uid}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setProducts(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        toast.error("Failed to fetch products");
-        setLoading(false);
-      });
-  };
-
+  // 4. Fetch Products
   useEffect(() => {
     if (!checkingAuth && user) {
-      fetchProducts();
+      setLoading(true);
+      fetch(`/api/events?userId=${user.uid}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setProducts(Array.isArray(data) ? data : []);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error("Failed to fetch products");
+          setProducts([]);
+          setLoading(false);
+        });
     }
   }, [checkingAuth, user]);
 
-  // 3. Handle Delete
-  const handleDelete = async (id) => {
+  // 5. Handle Delete
+  const handleDelete = async (id: string) => {
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
@@ -75,7 +88,7 @@ export default function Dashboard() {
         const data = await res.json();
         if (data.success) {
           toast.success("Event deleted!");
-          fetchProducts();
+          setProducts((prev) => prev.filter((p) => p._id !== id));
         } else {
           toast.error("Failed to delete");
         }
@@ -85,22 +98,24 @@ export default function Dashboard() {
     }
   };
 
-  // 4. Modal Handlers (The "Responsive" part)
-  const openEditModal = (product) => {
-    // Spreading the whole product into state at once is instant
+  // 6. Typed Modal Handlers
+  const openEditModal = (product: Product) => {
     setEditFormData({ ...product });
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setEditFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (editFormData) {
+      setEditFormData({
+        ...editFormData,
+        [name]: value,
+      });
+    }
   };
 
-  const handleEditSubmit = async (e) => {
+  const handleEditSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!editFormData) return;
     setIsSaving(true);
 
     try {
@@ -113,8 +128,10 @@ export default function Dashboard() {
       const data = await res.json();
       if (data.success) {
         toast.success("Event updated!");
+        setProducts((prev) =>
+          prev.map((p) => (p._id === editFormData._id ? editFormData : p))
+        );
         setEditFormData(null);
-        fetchProducts();
       } else {
         toast.error("Failed to update");
       }
@@ -140,7 +157,7 @@ export default function Dashboard() {
         <h1 className="text-3xl font-bold mb-4 md:mb-0">Dashboard</h1>
         <button
           className="py-2 px-6 bg-[#EE6983] text-white font-semibold rounded-lg shadow hover:bg-[#d94f6b] transition active:scale-95"
-          onClick={() => router.push("/dashboard/add-product")}
+          onClick={() => router.push("/dashboard/add-event")}
         >
           Add Event
         </button>
@@ -254,7 +271,7 @@ export default function Dashboard() {
                     name="location"
                     value={editFormData.location || ""}
                     onChange={handleInputChange}
-                    className="w-full p-2 border-2 border-[#EE6983] rounded-lg"
+                    className="w-full p-2 border-2 border-[#EE6983] rounded-lg outline-none"
                   />
                 </div>
 
@@ -264,7 +281,7 @@ export default function Dashboard() {
                     name="time"
                     value={editFormData.time || ""}
                     onChange={handleInputChange}
-                    className="w-full p-2 border-2 border-[#EE6983] rounded-lg"
+                    className="w-full p-2 border-2 border-[#EE6983] rounded-lg outline-none"
                   />
                 </div>
 
@@ -274,7 +291,7 @@ export default function Dashboard() {
                     name="category"
                     value={editFormData.category || ""}
                     onChange={handleInputChange}
-                    className="w-full p-2 border-2 border-[#EE6983] rounded-lg"
+                    className="w-full p-2 border-2 border-[#EE6983] rounded-lg outline-none"
                   />
                 </div>
               </div>

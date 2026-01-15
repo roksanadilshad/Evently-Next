@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 // DELETE /api/events/[id]
 export async function DELETE(
   req: NextRequest,
- context: { params: Promise<{ id: string }>  }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await context.params;
@@ -44,7 +44,7 @@ export async function DELETE(
 // PUT /api/events/[id]
 export async function PUT(
   req: NextRequest,
-  context : { params:  Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await context.params;
@@ -58,27 +58,26 @@ export async function PUT(
 
     const body = await req.json();
 
-    // const updatedEvent = {
-    //    title: body.title,
-    //   shortDesc: body.shortDesc,    // correct
-    //   fullDesc: body.fullDesc,      // correct
-    //   date: body.date,
-    //   time: body.time,
-    //   location: body.location,
-    //   category: body.category,
-    //   image: body.image,            // correct
-    //   price: Number(body.price),
-    //   priority: body.priority,
-    //   userId: body.userId,
-    //   updatedAt: new Date(),
-    // };
+    // --- FIX 1: REMOVE _id FROM THE UPDATE BODY ---
+    // MongoDB will throw an error if you try to include _id in a $set operation
+    const { _id, ...updateData } = body; 
+
+    // Optional: Ensure price is stored as a number
+    if (updateData.price) {
+        updateData.price = Number(updateData.price);
+    }
 
     const client = await clientPromise;
     const db = client.db("eventsDB");
 
     const result = await db.collection("newEvent").updateOne(
       { _id: new ObjectId(id) },
-      { $set: body }
+      { 
+        $set: {
+            ...updateData,
+            updatedAt: new Date() // Track when it was edited
+        } 
+      }
     );
 
     if (result.matchedCount === 0) {
@@ -87,12 +86,14 @@ export async function PUT(
         { status: 404 }
       );
     }
- 
-     const updatedEvent = await db.collection("events").findOne({ _id: new ObjectId(id) }); 
+
+    // --- FIX 2: CORRECT COLLECTION NAME ---
+    // Changed "events" to "newEvent" to match your collection name
+    const updatedDoc = await db.collection("newEvent").findOne({ _id: new ObjectId(id) }); 
 
     return NextResponse.json({
       success: true,
-      event: updatedEvent
+      event: updatedDoc
     });
   } catch (error) {
     console.error("PUT ERROR:", error);

@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "scripts/seed.js", "app/dashboard/manage-event/page.jsx"  ],
+, "scripts/seed.js", "app/dashboard/manage-event/page.tsx"  ],
   "exclude": ["node_modules"]
 }

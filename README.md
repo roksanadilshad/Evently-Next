@@ -110,4 +110,4 @@ Note: All protected routes require the user to be authenticated. Non-authenticat
 
 ---
 
-# Website live link: https://event-management-next-fscg.vercel.app/
+# Website live link: /

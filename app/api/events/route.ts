@@ -14,24 +14,27 @@ export async function GET(req: Request) {
       return NextResponse.json([], { status: 200 });
     }
 
-    // FIXED → FILTER BY USER
     const products = await db
       .collection("newEvent")
-      .find({ userId }) // ← added filter
+      .find({ userId })
       .sort({ createdAt: -1 })
       .toArray();
 
     const serialized = products.map((p) => ({
       ...p,
       _id: p._id.toString(),
-      createdAt: p.createdAt?.toISOString(),
+      // FIX: Ensure it's a Date object before calling toISOString
+      createdAt: p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString(),
+      // ADDED: Safety fallback for frontend interface names
+      shortDescription: p.shortDescription || p.shortDesc || "",
+      fullDescription: p.fullDescription || p.fullDesc || "",
     }));
 
     return NextResponse.json(serialized);
   } catch (error) {
-    console.error(error);
+    console.error("GET Error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch new events" },
+      { error: "Failed to fetch events" },
       { status: 500 }
     );
   }
@@ -43,17 +46,19 @@ export async function POST(req: Request) {
 
     const newEvent = {
       title: body.title,
-      shortDescription: body.shortDesc,
+      // Mapping frontend 'shortDesc' to DB 'shortDescription' 
+      shortDescription: body.shortDesc, 
       fullDescription: body.fullDesc,
       date: body.date,
       time: body.time,
       location: body.location,
       category: body.category,
-      image: body.image,
+      // FIX: Trim the image string to prevent the "trailing space" error
+      image: body.image ? body.image.trim() : "", 
       price: Number(body.price),
       priority: body.priority,
       userId: body.userId,
-      createdAt: new Date(),
+      createdAt: new Date(), // This stores it as a proper BSON Date in Mongo
     };
 
     const client = await clientPromise;
@@ -63,10 +68,14 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      event: { ...newEvent, _id: result.insertedId.toString() },
+      event: { 
+        ...newEvent, 
+        _id: result.insertedId.toString(),
+        createdAt: newEvent.createdAt.toISOString() // Return as string for frontend
+      },
     });
   } catch (error) {
-    console.error("Error inserting New Event:", error);
+    console.error("POST Error:", error);
     return NextResponse.json(
       { success: false, message: "Error inserting new event" },
       { status: 500 }
