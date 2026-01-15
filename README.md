@@ -110,4 +110,4 @@ Note: All protected routes require the user to be authenticated. Non-authenticat
 
 ---
 
-# Website live link: /
+# Website live link: https://evently-next-9b2j.vercel.app/
